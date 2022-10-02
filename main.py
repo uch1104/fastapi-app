@@ -2,12 +2,11 @@ from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
 import crud
-from db import Base, SessionLocal, engine
-from schemas import User
+from db import SessionLocal
+from schemas import UserCreate, UserResponse
 
 app = FastAPI()
 
-# Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -16,30 +15,40 @@ def get_db():
         db.close()
 
 
-@app.get("/user/{user_id}", response_model=User)
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    db_user = crud.get_user(db, user_id=user_id)
-    if db_user is None:
+# 特定のユーザー情報の取得
+@app.get("/user/{user_id}", response_model=UserResponse)
+def fetch_user(user_id: int, db: Session = Depends(get_db)):
+    user = crud.get_user(db, user_id=user_id)
+    if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    return db_user
+    return user
 
 
-@app.get("/user/list", response_model=list[User])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = crud.get_users(db, skip=skip, limit=limit)
-    return users
+# すべてのユーザー情報の取得
+@app.get("/user/list/", response_model=list[UserResponse])
+def fetch_users(db: Session = Depends(get_db)):
+    return crud.get_users(db)
 
 
-@app.post("/user/", response_model=User)
-def create_user(user: User, db: Session = Depends(get_db)):
-    return crud.create_user(db=db, user=user)
+# 新しいユーザーの登録
+@app.post("/user/", response_model=UserResponse)
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    return crud.create_user(db, user=user)
 
 
+# ユーザー情報の更新
 @app.put("/user/{user_id}")
-def update_user(user_id: int, request: User, db: Session = Depends(get_db)):
+def update_user(user_id: int, request: UserCreate, db: Session = Depends(get_db)):
+    user = crud.get_user(db, user_id=user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
     return crud.update_user(db, user_id, request)
 
 
+# ユーザーの削除
 @app.delete("/user/{user_id}")
-def delete_article(id: int, db: Session = Depends(get_db)):
-    return crud.delete_user(db, id)
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    user = crud.get_user(db, user_id=user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return crud.delete_user(db, user)
