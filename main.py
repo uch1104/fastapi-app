@@ -15,16 +15,16 @@ def get_db():
         db.close()
 
 
-# 特定のユーザー情報の取得
+# 特定のユーザーの情報取得
 @app.get("/user/{user_id}", response_model=UserResponse)
 def fetch_user(user_id: int, db: Session = Depends(get_db)):
-    user = crud.get_user(db, user_id=user_id)
+    user = crud.get_user(db, user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
 
-# すべてのユーザー情報の取得
+# すべてのユーザーの情報取得
 @app.get("/user/list/", response_model=list[UserResponse])
 def fetch_users(db: Session = Depends(get_db)):
     return crud.get_users(db)
@@ -33,13 +33,13 @@ def fetch_users(db: Session = Depends(get_db)):
 # 新しいユーザーの登録
 @app.post("/user/", response_model=UserResponse)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    return crud.create_user(db, user=user)
+    return crud.create_user(db, user)
 
 
 # ユーザー情報の更新
 @app.put("/user/{user_id}")
 def update_user(user_id: int, request: UserCreate, db: Session = Depends(get_db)):
-    user = crud.get_user(db, user_id=user_id)
+    user = crud.get_user(db, user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return crud.update_user(db, user_id, request)
@@ -48,7 +48,7 @@ def update_user(user_id: int, request: UserCreate, db: Session = Depends(get_db)
 # ユーザーの削除
 @app.delete("/user/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db)):
-    user = crud.get_user(db, user_id=user_id)
+    user = crud.get_user(db, user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return crud.delete_user(db, user)
